@@ -1,37 +1,37 @@
-import fs from 'fs';
+import FileOperations from "../utility/fileoperations";
 
 export default class ProductManager {
 
     constructor() {
+        this.fileOperations = new FileOperations();
         this.path = './database/products.json';
     }
 
-    getProductList() {
+    async getProductList() {
         try {
-            const data = fs.readFileSync(this.path, 'utf8');
-            return JSON.parse(data);
+            const data = await this.fileOperations.readFile(this.path);
+            return data
         } catch (error) {
             console.error("Error reading product list:", error);
             return [];
         }
     }
 
-    modifyProductList() {
+    async saveProductList(products) {
         try {
-            fs.writeFileSync(this.path, JSON.stringify(this.products));
+            await this.fileOperations.writeFile(this.path, JSON.stringify(products));
         } catch (error) {
             console.error("Error writing product list:", error);
         }
     }
 
-    getAllProducts() {
-        this.products = this.getProductList();
-        return this.products;
+    async getAllProducts() {
+        return await this.getProductList();
     }
 
-    getProductById(id) {
-        this.products = this.getProductList();
-        const product = this.products.find(product => product.productId === id);
+    async getProductById(id) {
+        const products = await this.getProductList();
+        const product = products.find(product => product.productId === id);
         if (!product) {
             console.error(`Product with id ${id} not found`);
             return null;
@@ -39,24 +39,26 @@ export default class ProductManager {
         return product;
     }
 
-    addProduct(product) {
-        this.products = this.getProductList();
-        this.products.push(product);
-        this.modifyProductList();
+    async addProduct(product) {
+        const products = await this.getProductList();
+        products.push(product);
+        await this.saveProductList(products);
     }
 
-    updateProduct(updatedProduct) {
-        this.products = this.getProductList();
-        const index = this.products.findIndex(product => product.productId === updatedProduct.productId);
+    async updateProduct(updatedProduct) {
+        const products = await this.getProductList();
+        const index = products.findIndex(product => product.productId === updatedProduct.productId);
         if (index !== -1) {
-            this.products[index] = updatedProduct;
-            this.modifyProductList();
+            products[index] = updatedProduct;
+            await this.saveProductList(products);
+        } else {
+            console.error(`Product with id ${updatedProduct.productId} not found`);
         }
     }
 
-    deleteProduct(id) {
-        this.products = this.getProductList();
-        this.products = this.products.filter(product => product.productId !== id);
-        this.modifyProductList();
+    async deleteProduct(id) {
+        const products = await this.getProductList();
+        const filteredProducts = products.filter(product => product.productId !== id);
+        await this.saveProductList(filteredProducts);
     }
 }

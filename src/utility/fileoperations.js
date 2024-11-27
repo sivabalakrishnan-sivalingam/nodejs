@@ -1,31 +1,27 @@
 // Desc: File operations class to read and write files
 
-import fs from 'node:fs';
+import { readFile, writeFile, appendFile } from 'fs/promises';
 
 export default class FileOperations {
-    readFile(path) {
+    async readFile(path) {
         try {
-            const data = fs.readFileSync(path, 'utf8');
+            const data = await readFile(path, 'utf8');
             return JSON.parse(data);
         } catch (err) {
             console.error('Error reading file:', err);
-            return null;
+            throw err;
         }
     }
 
-    writeFile(path, data, isUpdate = false) {
+    async writeFile(path, data, isUpdate = false) {
         try {
-            if (isUpdate) {
-                fs.appendFileSync(path, data);
-                console.log('File updated');
-            } else {
-                fs.writeFileSync(path, data);
-                console.log('File written');
-            }
+            const operation = isUpdate ? appendFile : writeFile;
+            await operation(path, data);
+            console.log(`File ${isUpdate ? 'updated' : 'written'}`);
             return true;
         } catch (err) {
             console.error('Error writing file:', err);
-            return false;
+            throw err;
         }
     }
 }
